@@ -3,14 +3,19 @@
 import { useState } from 'react';
 import { mockParolees } from '@/types/corrections';
 
+type Message = {
+  text: string;
+  sender: 'user' | 'bot';
+};
+
 export function ChatInterface() {
-  const [messages, setMessages] = useState<Array<{ text: string; sender: 'user' | 'bot' }>>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
 
   const handleSend = () => {
     if (!input.trim()) return;
 
-    const newMessages = [...messages, { text: input, sender: 'user' }];
+    const newMessages: Message[] = [...messages, { text: input, sender: 'user' }];
     setMessages(newMessages);
 
     // Simple mock response system
