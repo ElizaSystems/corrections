@@ -58,25 +58,17 @@ export function ChatInterface() {
   };
 
   const findInmate = (input: string): string | null => {
-    const lowercaseInput = input.toLowerCase();
-    const searchText = lowercaseInput
+    const searchText = input.toLowerCase()
       .replace('who is', '')
       .replace('tell me about', '')
       .replace('info on', '')
-      .replace('what about', '')
-      .replace('information about', '')
-      .replace('can you tell me about', '')
       .trim();
 
-    const inmate = mockInmates.find(i => 
-      i.name.toLowerCase().includes(searchText)
-    );
-
-    if (!inmate) return null;
-
-    return `${inmate.name} is serving a ${inmate.sentence} sentence for ${inmate.offense}. 
-      They are in ${inmate.facility} (${inmate.securityLevel} security) and have served ${inmate.timeServed}. 
-      Their behavior is rated as ${inmate.behavior}${inmate.lastIncident ? ` with the last incident on ${inmate.lastIncident}` : ''}.`;
+    const inmate = mockInmates.find(i => i.name.toLowerCase().includes(searchText));
+    if (inmate) {
+      return `${inmate.name} is serving ${inmate.sentence} for ${inmate.offense}. They are in ${inmate.facility} (${inmate.securityLevel} security) and have served ${inmate.timeServed}. Their behavior is rated as ${inmate.behavior}${inmate.lastIncident ? ` with the last incident on ${inmate.lastIncident}` : ''}.`;
+    }
+    return null;
   };
 
   const findMostWanted = (input: string): string | null => {
@@ -145,9 +137,9 @@ export function ChatInterface() {
     if (!input.trim()) return;
 
     const timestamp = formatTimestamp();
-    const newUserMessage = { 
+    const newUserMessage: Message = { 
       text: input, 
-      sender: 'user',
+      sender: 'user' as const,
       timestamp 
     };
     
@@ -169,20 +161,9 @@ export function ChatInterface() {
     else if (lowercaseInput.includes('who is') || 
              lowercaseInput.includes('tell me about') ||
              lowercaseInput.includes('info on')) {
-      // Check each database in order
-      const mostWantedInfo = findMostWanted(input);
-      if (mostWantedInfo) {
-        response = mostWantedInfo;
-      } else {
-        const inmateInfo = findInmate(input);
-        if (inmateInfo) {
-          response = inmateInfo;
-        } else {
-          const paroleeInfo = findParolee(input);
-          if (paroleeInfo) {
-            response = paroleeInfo;
-          }
-        }
+      const inmateInfo = findInmate(input);
+      if (inmateInfo) {
+        response = inmateInfo;
       }
     }
 
@@ -190,7 +171,7 @@ export function ChatInterface() {
     setTimeout(() => {
       setMessages(prev => [...prev, { 
         text: response, 
-        sender: 'bot',
+        sender: 'bot' as const,
         timestamp: formatTimestamp()
       }]);
     }, 300);
