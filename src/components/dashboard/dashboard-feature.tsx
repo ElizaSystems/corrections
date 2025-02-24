@@ -13,7 +13,7 @@ export default function DashboardFeature() {
     <div className="container mx-auto p-4">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-2">Department of Corrections Dashboard</h1>
-        <p className="text-gray-600">Parole Management System</p>
+        <p className="text-gray-600"></p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -165,7 +165,7 @@ export default function DashboardFeature() {
         </div>
 
         <div>
-          <h2 className="text-2xl font-semibold mb-4">AI Assistant</h2>
+          <h2 className="text-2xl font-semibold mb-4">Ask Eliza</h2>
           <ChatInterface />
         </div>
       </div>

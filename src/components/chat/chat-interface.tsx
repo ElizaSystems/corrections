@@ -129,95 +129,101 @@ export function ChatInterface() {
       response = mostWantedInfo;
     }
     // Then check Inmates
-    else if (findInmate(personName)) {
-      response = findInmate(personName);
-    }
-    // Then check Parolees
-    else if (findParolee(personName)) {
-      response = findParolee(personName);
-    }
-    // If no person found, handle other query types
-    else if (lowercaseInput.includes('most wanted') || lowercaseInput.includes('fugitive')) {
-      if (lowercaseInput.includes('count') || lowercaseInput.includes('how many')) {
-        if (lowercaseInput.includes('extreme')) {
-          const extremeDanger = mockMostWanted.filter(p => p.dangerLevel === 'Extreme').length;
-          response = `There are ${extremeDanger} extremely dangerous fugitives on the Most Wanted list.`;
-        } else if (lowercaseInput.includes('high')) {
-          const highDanger = mockMostWanted.filter(p => p.dangerLevel === 'High').length;
-          response = `There are ${highDanger} high-danger fugitives on the Most Wanted list.`;
-        } else if (lowercaseInput.includes('medium')) {
-          const mediumDanger = mockMostWanted.filter(p => p.dangerLevel === 'Medium').length;
-          response = `There are ${mediumDanger} medium-danger fugitives on the Most Wanted list.`;
-        } else {
-          response = `There are currently ${mockMostWanted.length} people on the Most Wanted list.`;
-        }
-      } else if (lowercaseInput.includes('recent') || lowercaseInput.includes('last seen')) {
-        const recentSightings = mockMostWanted.filter(p => 
-          new Date(p.lastSeen) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        );
-        response = `In the past month, there have been ${recentSightings.length} reported sightings of Most Wanted individuals.`;
-      } else if (lowercaseInput.includes('reward')) {
-        const totalReward = mockMostWanted
-          .reduce((sum, p) => sum + parseInt(p.reward.replace(/[^0-9]/g, '')), 0);
-        response = `The total reward money for all Most Wanted individuals is $${totalReward.toLocaleString()}.`;
-      }
-    }
-    else if (lowercaseInput.includes('inmate')) {
-      if (lowercaseInput.includes('count') || lowercaseInput.includes('how many')) {
-        if (lowercaseInput.includes('maximum')) {
-          const maxSecurity = mockInmates.filter(i => i.securityLevel === 'Maximum').length;
-          response = `There are ${maxSecurity} maximum security inmates.`;
-        } else if (lowercaseInput.includes('medium')) {
-          const medSecurity = mockInmates.filter(i => i.securityLevel === 'Medium').length;
-          response = `There are ${medSecurity} medium security inmates.`;
-        } else if (lowercaseInput.includes('minimum')) {
-          const minSecurity = mockInmates.filter(i => i.securityLevel === 'Minimum').length;
-          response = `There are ${minSecurity} minimum security inmates.`;
-        } else {
-          response = `There are currently ${mockInmates.length} total inmates.`;
-        }
-      } else if (lowercaseInput.includes('behavior') || lowercaseInput.includes('conduct')) {
-        const goodBehavior = mockInmates.filter(i => i.behavior === 'Good').length;
-        const fairBehavior = mockInmates.filter(i => i.behavior === 'Fair').length;
-        const poorBehavior = mockInmates.filter(i => i.behavior === 'Poor').length;
-        response = `Currently, ${goodBehavior} inmates show good behavior, ${fairBehavior} show fair behavior, and ${poorBehavior} show poor behavior.`;
-      } else if (lowercaseInput.includes('incident')) {
-        const recentIncidents = mockInmates.filter(i => 
-          i.lastIncident && new Date(i.lastIncident) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        );
-        response = `In the past month, ${recentIncidents.length} inmates have had behavioral incidents.`;
-      }
-    }
     else {
-      if (lowercaseInput.includes('how many') || lowercaseInput.includes('count')) {
-        if (lowercaseInput.includes('high risk')) {
-          const highRisk = mockParolees.filter(p => p.riskLevel === 'High').length;
-          response = `There are ${highRisk} high-risk parolees in the system.`;
-        } else if (lowercaseInput.includes('medium risk')) {
-          const mediumRisk = mockParolees.filter(p => p.riskLevel === 'Medium').length;
-          response = `There are ${mediumRisk} medium-risk parolees in the system.`;
-        } else if (lowercaseInput.includes('low risk')) {
-          const lowRisk = mockParolees.filter(p => p.riskLevel === 'Low').length;
-          response = `There are ${lowRisk} low-risk parolees in the system.`;
-        } else {
-          response = `There are currently ${mockParolees.length} total parolees in the system.`;
+      const inmateInfo = findInmate(personName);
+      if (inmateInfo) {
+        response = inmateInfo;
+      }
+      // Then check Parolees
+      else {
+        const paroleeInfo = findParolee(personName);
+        if (paroleeInfo) {
+          response = paroleeInfo;
         }
-      } else if (lowercaseInput.includes('recent check')) {
-        const recentCheckIns = mockParolees.filter(p => 
-          new Date(p.lastCheckIn) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        );
-        response = `In the past week, ${recentCheckIns.length} parolees have checked in.`;
-      } else if (lowercaseInput.includes('overdue')) {
-        const today = new Date();
-        const overdue = mockParolees.filter(p => 
-          new Date(p.lastCheckIn) < new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000)
-        );
-        if (overdue.length > 0) {
-          response = `There are ${overdue.length} parolees who haven't checked in for over 2 weeks: ${
-            overdue.map(p => p.name).join(', ')
-          }`;
-        } else {
-          response = "No parolees are currently overdue for check-ins.";
+        // If no person found, handle other query types
+        else if (lowercaseInput.includes('most wanted') || lowercaseInput.includes('fugitive')) {
+          if (lowercaseInput.includes('count') || lowercaseInput.includes('how many')) {
+            if (lowercaseInput.includes('extreme')) {
+              const extremeDanger = mockMostWanted.filter(p => p.dangerLevel === 'Extreme').length;
+              response = `There are ${extremeDanger} extremely dangerous fugitives on the Most Wanted list.`;
+            } else if (lowercaseInput.includes('high')) {
+              const highDanger = mockMostWanted.filter(p => p.dangerLevel === 'High').length;
+              response = `There are ${highDanger} high-danger fugitives on the Most Wanted list.`;
+            } else if (lowercaseInput.includes('medium')) {
+              const mediumDanger = mockMostWanted.filter(p => p.dangerLevel === 'Medium').length;
+              response = `There are ${mediumDanger} medium-danger fugitives on the Most Wanted list.`;
+            } else {
+              response = `There are currently ${mockMostWanted.length} people on the Most Wanted list.`;
+            }
+          } else if (lowercaseInput.includes('recent') || lowercaseInput.includes('last seen')) {
+            const recentSightings = mockMostWanted.filter(p => 
+              new Date(p.lastSeen) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+            );
+            response = `In the past month, there have been ${recentSightings.length} reported sightings of Most Wanted individuals.`;
+          } else if (lowercaseInput.includes('reward')) {
+            const totalReward = mockMostWanted
+              .reduce((sum, p) => sum + parseInt(p.reward.replace(/[^0-9]/g, '')), 0);
+            response = `The total reward money for all Most Wanted individuals is $${totalReward.toLocaleString()}.`;
+          }
+        }
+        else if (lowercaseInput.includes('inmate')) {
+          if (lowercaseInput.includes('count') || lowercaseInput.includes('how many')) {
+            if (lowercaseInput.includes('maximum')) {
+              const maxSecurity = mockInmates.filter(i => i.securityLevel === 'Maximum').length;
+              response = `There are ${maxSecurity} maximum security inmates.`;
+            } else if (lowercaseInput.includes('medium')) {
+              const medSecurity = mockInmates.filter(i => i.securityLevel === 'Medium').length;
+              response = `There are ${medSecurity} medium security inmates.`;
+            } else if (lowercaseInput.includes('minimum')) {
+              const minSecurity = mockInmates.filter(i => i.securityLevel === 'Minimum').length;
+              response = `There are ${minSecurity} minimum security inmates.`;
+            } else {
+              response = `There are currently ${mockInmates.length} total inmates.`;
+            }
+          } else if (lowercaseInput.includes('behavior') || lowercaseInput.includes('conduct')) {
+            const goodBehavior = mockInmates.filter(i => i.behavior === 'Good').length;
+            const fairBehavior = mockInmates.filter(i => i.behavior === 'Fair').length;
+            const poorBehavior = mockInmates.filter(i => i.behavior === 'Poor').length;
+            response = `Currently, ${goodBehavior} inmates show good behavior, ${fairBehavior} show fair behavior, and ${poorBehavior} show poor behavior.`;
+          } else if (lowercaseInput.includes('incident')) {
+            const recentIncidents = mockInmates.filter(i => 
+              i.lastIncident && new Date(i.lastIncident) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+            );
+            response = `In the past month, ${recentIncidents.length} inmates have had behavioral incidents.`;
+          }
+        }
+        else {
+          if (lowercaseInput.includes('how many') || lowercaseInput.includes('count')) {
+            if (lowercaseInput.includes('high risk')) {
+              const highRisk = mockParolees.filter(p => p.riskLevel === 'High').length;
+              response = `There are ${highRisk} high-risk parolees in the system.`;
+            } else if (lowercaseInput.includes('medium risk')) {
+              const mediumRisk = mockParolees.filter(p => p.riskLevel === 'Medium').length;
+              response = `There are ${mediumRisk} medium-risk parolees in the system.`;
+            } else if (lowercaseInput.includes('low risk')) {
+              const lowRisk = mockParolees.filter(p => p.riskLevel === 'Low').length;
+              response = `There are ${lowRisk} low-risk parolees in the system.`;
+            } else {
+              response = `There are currently ${mockParolees.length} total parolees in the system.`;
+            }
+          } else if (lowercaseInput.includes('recent check')) {
+            const recentCheckIns = mockParolees.filter(p => 
+              new Date(p.lastCheckIn) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            );
+            response = `In the past week, ${recentCheckIns.length} parolees have checked in.`;
+          } else if (lowercaseInput.includes('overdue')) {
+            const today = new Date();
+            const overdue = mockParolees.filter(p => 
+              new Date(p.lastCheckIn) < new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000)
+            );
+            if (overdue.length > 0) {
+              response = `There are ${overdue.length} parolees who haven't checked in for over 2 weeks: ${
+                overdue.map(p => p.name).join(', ')
+              }`;
+            } else {
+              response = "No parolees are currently overdue for check-ins.";
+            }
+          }
         }
       }
     }

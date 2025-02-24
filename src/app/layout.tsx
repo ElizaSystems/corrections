@@ -6,7 +6,7 @@ import {ReactQueryProvider} from './react-query-provider'
 
 export const metadata = {
   title: 'Department of Corrections Dashboard',
-  description: 'Parole Management System',
+  description: '',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
