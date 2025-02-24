@@ -5,10 +5,36 @@ import { mockParolees } from '@/types/corrections';
 import { mockInmates } from '@/types/inmates';
 import { mockMostWanted } from '@/types/most-wanted';
 import { ChatInterface } from '../chat/chat-interface';
+import MessageInput from '../MessageInput';
+import ChatBox from '../ChatBox';
 
 export default function DashboardFeature() {
   const [activeTab, setActiveTab] = useState<'parolees' | 'inmates' | 'most-wanted'>('parolees');
   const [sendQuery, setSendQuery] = useState<(text: string) => void>(() => () => {});
+
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
+
+  const sendMessage = async (input: string) => {
+    // Add user message to state
+    const userMessage = { sender: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
+  
+    try {
+      // Send user input to the backend
+      const response = await fetch("/api/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input }),
+      });
+  
+      // Add bot's response to state
+      const data: { sender: string; text: string }[] = await response.json();
+      const botMessage = { sender: "bot", text: data[0]?.text || "No response" };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
 
   const handleRowClick = (name: string) => {
     sendQuery(`Who is ${name}?`);
@@ -182,10 +208,13 @@ export default function DashboardFeature() {
         </div>
 
         <div className="bg-base-200 rounded-lg p-4">
-          <h2 className="text-2xl font-semibold mb-4">Ask Eliza</h2>
-          <ChatInterface 
-            onInit={(sendQueryFn) => setSendQuery(() => sendQueryFn)} 
-          />
+          <div className="flex flex-col h-full">
+          <h2 className="text-2xl font-semibold">Ask Eliza</h2>
+          <div className="h-full flex flex-col justify-between">
+              <ChatBox messages={messages} />
+              <MessageInput onSend={sendMessage} />
+              </div>
+          </div>
         </div>
       </div>
 
