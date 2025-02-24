@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { mockParolees } from '@/types/corrections';
 import { mockInmates } from '@/types/inmates';
 import { mockMostWanted } from '@/types/most-wanted';
@@ -11,7 +11,11 @@ type Message = {
   timestamp: string;
 };
 
-export function ChatInterface() {
+interface ChatInterfaceProps {
+  onInit?: (fn: (text: string) => void) => void;
+}
+
+export function ChatInterface({ onInit }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,21 +38,18 @@ export function ChatInterface() {
   };
 
   const findParolee = (input: string): string | null => {
-    const lowercaseInput = input.toLowerCase();
-    // Remove common question words and patterns
-    const searchText = lowercaseInput
-      .replace('who is', '')
-      .replace('tell me about', '')
-      .replace('info on', '')
-      .replace('what about', '')
-      .replace('information about', '')
-      .replace('can you tell me about', '')
+    const searchText = input.toLowerCase()
+      .replace(/who is|tell me about|info on|what about|information about|can you tell me about/g, '')
       .trim();
 
-    // Find parolee by name
-    const parolee = mockParolees.find(p => 
-      p.name.toLowerCase().includes(searchText)
-    );
+    const parolee = mockParolees.find(p => {
+      const paroleNameLower = p.name.toLowerCase();
+      const nameParts = paroleNameLower.split(' ');
+      const searchParts = searchText.split(' ');
+      
+      return nameParts.some(part => searchParts.includes(part)) ||
+             searchParts.some(part => paroleNameLower.includes(part));
+    });
 
     if (!parolee) return null;
 
@@ -59,12 +60,22 @@ export function ChatInterface() {
 
   const findInmate = (input: string): string | null => {
     const searchText = input.toLowerCase()
-      .replace('who is', '')
-      .replace('tell me about', '')
-      .replace('info on', '')
+      .replace(/who is|tell me about|info on|what about|information about|can you tell me about/g, '')
       .trim();
 
-    const inmate = mockInmates.find(i => i.name.toLowerCase().includes(searchText));
+    // Add console.log for debugging
+    console.log('Searching for inmate:', searchText);
+    
+    const inmate = mockInmates.find(i => {
+      const inmateNameLower = i.name.toLowerCase();
+      // Check both full name and parts of the name
+      const nameParts = inmateNameLower.split(' ');
+      const searchParts = searchText.split(' ');
+      
+      return nameParts.some(part => searchParts.includes(part)) ||
+             searchParts.some(part => inmateNameLower.includes(part));
+    });
+
     if (inmate) {
       return `${inmate.name} is serving ${inmate.sentence} for ${inmate.offense}. They are in ${inmate.facility} (${inmate.securityLevel} security) and have served ${inmate.timeServed}. Their behavior is rated as ${inmate.behavior}${inmate.lastIncident ? ` with the last incident on ${inmate.lastIncident}` : ''}.`;
     }
@@ -72,16 +83,18 @@ export function ChatInterface() {
   };
 
   const findMostWanted = (input: string): string | null => {
-    const lowercaseInput = input.toLowerCase();
-    const searchText = lowercaseInput
-      .replace('who is', '')
-      .replace('tell me about', '')
-      .replace('info on', '')
+    const searchText = input.toLowerCase()
+      .replace(/who is|tell me about|info on|what about|information about|can you tell me about/g, '')
       .trim();
 
-    const person = mockMostWanted.find(p => 
-      p.name.toLowerCase().includes(searchText)
-    );
+    const person = mockMostWanted.find(p => {
+      const personNameLower = p.name.toLowerCase();
+      const nameParts = personNameLower.split(' ');
+      const searchParts = searchText.split(' ');
+      
+      return nameParts.some(part => searchParts.includes(part)) ||
+             searchParts.some(part => personNameLower.includes(part));
+    });
 
     if (!person) return null;
 
@@ -133,13 +146,12 @@ export function ChatInterface() {
     return null;
   };
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-
+  // Move handleSend definition into useCallback
+  const handleSend = useCallback((text: string = input) => {
     const timestamp = formatTimestamp();
     const newUserMessage: Message = { 
-      text: input, 
-      sender: 'user' as const,
+      text, 
+      sender: 'user',
       timestamp 
     };
     
@@ -147,12 +159,12 @@ export function ChatInterface() {
 
     // Process the response
     let response = "I'm sorry, I don't understand that question.";
-    const lowercaseInput = input.toLowerCase();
+    const lowercaseInput = text.toLowerCase();
 
     // Check for recommendations
     if (lowercaseInput.includes('what should we do with') || 
         lowercaseInput.includes('thoughts on')) {
-      const recommendation = getRecommendation(input);
+      const recommendation = getRecommendation(text);
       if (recommendation) {
         response = recommendation;
       }
@@ -161,9 +173,19 @@ export function ChatInterface() {
     else if (lowercaseInput.includes('who is') || 
              lowercaseInput.includes('tell me about') ||
              lowercaseInput.includes('info on')) {
-      const inmateInfo = findInmate(input);
-      if (inmateInfo) {
-        response = inmateInfo;
+      const mostWantedInfo = findMostWanted(text);
+      if (mostWantedInfo) {
+        response = mostWantedInfo;
+      } else {
+        const inmateInfo = findInmate(text);
+        if (inmateInfo) {
+          response = inmateInfo;
+        } else {
+          const paroleeInfo = findParolee(text);
+          if (paroleeInfo) {
+            response = paroleeInfo;
+          }
+        }
       }
     }
 
@@ -171,13 +193,20 @@ export function ChatInterface() {
     setTimeout(() => {
       setMessages(prev => [...prev, { 
         text: response, 
-        sender: 'bot' as const,
+        sender: 'bot',
         timestamp: formatTimestamp()
       }]);
     }, 300);
 
     setInput('');
-  };
+  }, []); // Empty dependency array since it doesn't depend on any props or state
+
+  // Initialize the query function once
+  useEffect(() => {
+    if (onInit) {
+      onInit(handleSend);
+    }
+  }, [onInit, handleSend]);
 
   return (
     <div className="flex flex-col h-[600px]">
@@ -219,7 +248,7 @@ export function ChatInterface() {
           />
           <button 
             className="btn btn-primary" 
-            onClick={handleSend}
+            onClick={() => handleSend()}
           >
             Send
           </button>

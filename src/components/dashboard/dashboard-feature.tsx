@@ -8,6 +8,11 @@ import { ChatInterface } from '../chat/chat-interface';
 
 export default function DashboardFeature() {
   const [activeTab, setActiveTab] = useState<'parolees' | 'inmates' | 'most-wanted'>('parolees');
+  const [sendQuery, setSendQuery] = useState<(text: string) => void>(() => () => {});
+
+  const handleRowClick = (name: string) => {
+    sendQuery(`Who is ${name}?`);
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -55,7 +60,11 @@ export default function DashboardFeature() {
                   </thead>
                   <tbody>
                     {mockMostWanted.map((person) => (
-                      <tr key={person.id} className="hover">
+                      <tr 
+                        key={person.id} 
+                        className="hover cursor-pointer" 
+                        onClick={() => handleRowClick(person.name)}
+                      >
                         <td>{person.id}</td>
                         <td>{person.name}</td>
                         <td>{person.lastSeen}</td>
@@ -98,7 +107,11 @@ export default function DashboardFeature() {
                   </thead>
                   <tbody>
                     {mockParolees.map((parolee) => (
-                      <tr key={parolee.id} className="hover">
+                      <tr 
+                        key={parolee.id} 
+                        className="hover cursor-pointer" 
+                        onClick={() => handleRowClick(parolee.name)}
+                      >
                         <td>{parolee.id}</td>
                         <td>{parolee.name}</td>
                         <td>{parolee.timeLeft}</td>
@@ -133,7 +146,11 @@ export default function DashboardFeature() {
                   </thead>
                   <tbody>
                     {mockInmates.map((inmate) => (
-                      <tr key={inmate.id} className="hover">
+                      <tr 
+                        key={inmate.id} 
+                        className="hover cursor-pointer" 
+                        onClick={() => handleRowClick(inmate.name)}
+                      >
                         <td>{inmate.id}</td>
                         <td>{inmate.name}</td>
                         <td>{inmate.timeServed}</td>
@@ -165,8 +182,10 @@ export default function DashboardFeature() {
         </div>
 
         <div className="bg-base-200 rounded-lg p-4">
-          <h2 className="text-2xl font-semibold mb-4">AI Assistant</h2>
-          <ChatInterface />
+          <h2 className="text-2xl font-semibold mb-4">Ask Eliza</h2>
+          <ChatInterface 
+            onInit={(sendQueryFn) => setSendQuery(() => sendQueryFn)} 
+          />
         </div>
       </div>
 
