@@ -9,12 +9,6 @@ export const metadata = {
   description: 'Parole Management System',
 }
 
-const links: { label: string; path: string }[] = [
-  { label: 'Account', path: '/account' },
-  { label: 'Clusters', path: '/clusters' },
-  { label: 'Basic Program', path: '/basic' },
-]
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -22,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ReactQueryProvider>
           <ClusterProvider>
             <SolanaProvider>
-              <UiLayout links={links}>{children}</UiLayout>
+              <UiLayout>{children}</UiLayout>
             </SolanaProvider>
           </ClusterProvider>
         </ReactQueryProvider>
