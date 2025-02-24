@@ -99,171 +99,150 @@ export function ChatInterface() {
       Description: ${person.description}`;
   };
 
+  const getRecommendation = (input: string): string | null => {
+    const lowercaseInput = input.toLowerCase();
+    const searchName = lowercaseInput
+      .replace('what should we do with', '')
+      .replace('thoughts on', '')
+      .trim();
+
+    // First check inmates
+    const inmate = mockInmates.find(i => 
+      i.name.toLowerCase().includes(searchName)
+    );
+
+    if (inmate) {
+      if (inmate.behavior === 'Good') {
+        return `Based on ${inmate.name}'s good behavior and ${inmate.securityLevel.toLowerCase()} security status, recommend:
+          1. Consider for program advancement
+          2. Evaluate for privilege increase
+          3. Potential for security level reduction
+          4. Add to mentorship program
+          5. Continue positive reinforcement`;
+      } else if (inmate.behavior === 'Fair') {
+        return `For ${inmate.name}, with fair behavior record, recommend:
+          1. Maintain current supervision level
+          2. Regular counseling sessions
+          3. Behavior improvement incentives
+          4. Monthly progress reviews
+          5. Skill development programs`;
+      } else {
+        const daysSinceIncident = inmate.lastIncident ? 
+          Math.floor((Date.now() - new Date(inmate.lastIncident).getTime()) / (1000 * 60 * 60 * 24)) : 
+          0;
+        return `Due to ${inmate.name}'s poor behavior record${inmate.lastIncident ? ` (last incident ${daysSinceIncident} days ago)` : ''}, recommend:
+          1. Increase supervision
+          2. Mandatory counseling
+          3. Review security classification
+          4. Behavior management program
+          5. Mental health evaluation`;
+      }
+    }
+    return null;
+  };
+
   const handleSend = () => {
     if (!input.trim()) return;
 
     const timestamp = formatTimestamp();
-    const newMessages: Message[] = [...messages, { 
+    const newUserMessage = { 
       text: input, 
       sender: 'user',
       timestamp 
-    }];
-    setMessages(newMessages);
+    };
+    
+    setMessages(prev => [...prev, newUserMessage]);
 
+    // Process the response
     let response = "I'm sorry, I don't understand that question.";
     const lowercaseInput = input.toLowerCase();
 
-    // Try to find the person in any category
-    const personName = lowercaseInput
-      .replace('who is', '')
-      .replace('tell me about', '')
-      .replace('info on', '')
-      .replace('what about', '')
-      .replace('information about', '')
-      .replace('can you tell me about', '')
-      .trim();
-
-    // Check Most Wanted first
-    const mostWantedInfo = findMostWanted(personName);
-    if (mostWantedInfo) {
-      response = mostWantedInfo;
-    }
-    // Then check Inmates
-    else {
-      const inmateInfo = findInmate(personName);
-      if (inmateInfo) {
-        response = inmateInfo;
+    // Check for recommendations
+    if (lowercaseInput.includes('what should we do with') || 
+        lowercaseInput.includes('thoughts on')) {
+      const recommendation = getRecommendation(input);
+      if (recommendation) {
+        response = recommendation;
       }
-      // Then check Parolees
-      else {
-        const paroleeInfo = findParolee(personName);
-        if (paroleeInfo) {
-          response = paroleeInfo;
-        }
-        // If no person found, handle other query types
-        else if (lowercaseInput.includes('most wanted') || lowercaseInput.includes('fugitive')) {
-          if (lowercaseInput.includes('count') || lowercaseInput.includes('how many')) {
-            if (lowercaseInput.includes('extreme')) {
-              const extremeDanger = mockMostWanted.filter(p => p.dangerLevel === 'Extreme').length;
-              response = `There are ${extremeDanger} extremely dangerous fugitives on the Most Wanted list.`;
-            } else if (lowercaseInput.includes('high')) {
-              const highDanger = mockMostWanted.filter(p => p.dangerLevel === 'High').length;
-              response = `There are ${highDanger} high-danger fugitives on the Most Wanted list.`;
-            } else if (lowercaseInput.includes('medium')) {
-              const mediumDanger = mockMostWanted.filter(p => p.dangerLevel === 'Medium').length;
-              response = `There are ${mediumDanger} medium-danger fugitives on the Most Wanted list.`;
-            } else {
-              response = `There are currently ${mockMostWanted.length} people on the Most Wanted list.`;
-            }
-          } else if (lowercaseInput.includes('recent') || lowercaseInput.includes('last seen')) {
-            const recentSightings = mockMostWanted.filter(p => 
-              new Date(p.lastSeen) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-            );
-            response = `In the past month, there have been ${recentSightings.length} reported sightings of Most Wanted individuals.`;
-          } else if (lowercaseInput.includes('reward')) {
-            const totalReward = mockMostWanted
-              .reduce((sum, p) => sum + parseInt(p.reward.replace(/[^0-9]/g, '')), 0);
-            response = `The total reward money for all Most Wanted individuals is $${totalReward.toLocaleString()}.`;
-          }
-        }
-        else if (lowercaseInput.includes('inmate')) {
-          if (lowercaseInput.includes('count') || lowercaseInput.includes('how many')) {
-            if (lowercaseInput.includes('maximum')) {
-              const maxSecurity = mockInmates.filter(i => i.securityLevel === 'Maximum').length;
-              response = `There are ${maxSecurity} maximum security inmates.`;
-            } else if (lowercaseInput.includes('medium')) {
-              const medSecurity = mockInmates.filter(i => i.securityLevel === 'Medium').length;
-              response = `There are ${medSecurity} medium security inmates.`;
-            } else if (lowercaseInput.includes('minimum')) {
-              const minSecurity = mockInmates.filter(i => i.securityLevel === 'Minimum').length;
-              response = `There are ${minSecurity} minimum security inmates.`;
-            } else {
-              response = `There are currently ${mockInmates.length} total inmates.`;
-            }
-          } else if (lowercaseInput.includes('behavior') || lowercaseInput.includes('conduct')) {
-            const goodBehavior = mockInmates.filter(i => i.behavior === 'Good').length;
-            const fairBehavior = mockInmates.filter(i => i.behavior === 'Fair').length;
-            const poorBehavior = mockInmates.filter(i => i.behavior === 'Poor').length;
-            response = `Currently, ${goodBehavior} inmates show good behavior, ${fairBehavior} show fair behavior, and ${poorBehavior} show poor behavior.`;
-          } else if (lowercaseInput.includes('incident')) {
-            const recentIncidents = mockInmates.filter(i => 
-              i.lastIncident && new Date(i.lastIncident) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-            );
-            response = `In the past month, ${recentIncidents.length} inmates have had behavioral incidents.`;
-          }
-        }
-        else {
-          if (lowercaseInput.includes('how many') || lowercaseInput.includes('count')) {
-            if (lowercaseInput.includes('high risk')) {
-              const highRisk = mockParolees.filter(p => p.riskLevel === 'High').length;
-              response = `There are ${highRisk} high-risk parolees in the system.`;
-            } else if (lowercaseInput.includes('medium risk')) {
-              const mediumRisk = mockParolees.filter(p => p.riskLevel === 'Medium').length;
-              response = `There are ${mediumRisk} medium-risk parolees in the system.`;
-            } else if (lowercaseInput.includes('low risk')) {
-              const lowRisk = mockParolees.filter(p => p.riskLevel === 'Low').length;
-              response = `There are ${lowRisk} low-risk parolees in the system.`;
-            } else {
-              response = `There are currently ${mockParolees.length} total parolees in the system.`;
-            }
-          } else if (lowercaseInput.includes('recent check')) {
-            const recentCheckIns = mockParolees.filter(p => 
-              new Date(p.lastCheckIn) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-            );
-            response = `In the past week, ${recentCheckIns.length} parolees have checked in.`;
-          } else if (lowercaseInput.includes('overdue')) {
-            const today = new Date();
-            const overdue = mockParolees.filter(p => 
-              new Date(p.lastCheckIn) < new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000)
-            );
-            if (overdue.length > 0) {
-              response = `There are ${overdue.length} parolees who haven't checked in for over 2 weeks: ${
-                overdue.map(p => p.name).join(', ')
-              }`;
-            } else {
-              response = "No parolees are currently overdue for check-ins.";
-            }
+    } 
+    // Check for who-is queries
+    else if (lowercaseInput.includes('who is') || 
+             lowercaseInput.includes('tell me about') ||
+             lowercaseInput.includes('info on')) {
+      // Check each database in order
+      const mostWantedInfo = findMostWanted(input);
+      if (mostWantedInfo) {
+        response = mostWantedInfo;
+      } else {
+        const inmateInfo = findInmate(input);
+        if (inmateInfo) {
+          response = inmateInfo;
+        } else {
+          const paroleeInfo = findParolee(input);
+          if (paroleeInfo) {
+            response = paroleeInfo;
           }
         }
       }
     }
 
-    setMessages([...newMessages, { text: response, sender: 'bot', timestamp }]);
+    // Add bot response with slight delay
+    setTimeout(() => {
+      setMessages(prev => [...prev, { 
+        text: response, 
+        sender: 'bot',
+        timestamp: formatTimestamp()
+      }]);
+    }, 300);
+
     setInput('');
   };
 
   return (
     <div className="flex flex-col h-[600px]">
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4 bg-[#000000]">
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`chat ${message.sender === 'user' ? 'chat-end' : 'chat-start'}`}
+            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className="chat-header opacity-50 text-xs mb-1">
-              {message.timestamp}
-            </div>
-            <div className={`chat-bubble ${
-              message.sender === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
-            }`}>
+            <div 
+              className={`rounded-2xl px-4 py-2 max-w-[70%] ${
+                message.sender === 'user' 
+                  ? 'bg-[#0B93F6] text-white' // iOS blue
+                  : 'bg-[#35C759] text-white' // iOS green
+              }`}
+              style={{
+                marginLeft: message.sender === 'user' ? '4px' : '0px',
+                marginRight: message.sender === 'bot' ? '4px' : '0px',
+              }}
+            >
               {message.text}
+              <div className="text-xs opacity-70 mt-1">
+                {message.timestamp}
+              </div>
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Ask about parolees, inmates, or most wanted..."
-          className="input input-bordered flex-1"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-        />
-        <button className="btn btn-primary" onClick={handleSend}>
-          Send
-        </button>
+      <div className="p-4 bg-[#000000]">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Ask about inmates, parolees, or most wanted..."
+            className="input input-bordered flex-1 bg-gray-800 text-white"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+          />
+          <button 
+            className="btn btn-primary" 
+            onClick={handleSend}
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );

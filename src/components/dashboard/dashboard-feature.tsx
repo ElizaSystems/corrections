@@ -164,8 +164,8 @@ export default function DashboardFeature() {
           )}
         </div>
 
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Ask Eliza</h2>
+        <div className="bg-base-200 rounded-lg p-4">
+          <h2 className="text-2xl font-semibold mb-4">AI Assistant</h2>
           <ChatInterface />
         </div>
       </div>
