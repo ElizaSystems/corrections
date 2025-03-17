@@ -5,7 +5,7 @@ const AGENT_ID = "d4a35b77-66cc-0694-8fc5-ce7947d75c9a"; // Your agent ID
 export async function POST(req: Request) {
   try {
     const { input } = await req.json();
-    const response = await fetch(`http://3.86.66.145/api/${AGENT_ID}/message`, {
+    const response = await fetch(`http://192.168.1.123/app1/${AGENT_ID}/message`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
